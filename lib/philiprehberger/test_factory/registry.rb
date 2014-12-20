@@ -35,8 +35,8 @@ module Philiprehberger
       # @param name [Symbol] sequence name
       # @param block [Proc] block receiving an integer counter
       # @return [void]
-      def sequence(name, &block)
-        @sequences[name] = Sequence.new(&block)
+      def sequence(name, &)
+        @sequences[name] = Sequence.new(&)
       end
 
       # Retrieve a factory definition.

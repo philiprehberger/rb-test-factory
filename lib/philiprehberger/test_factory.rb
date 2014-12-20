@@ -16,8 +16,8 @@ module Philiprehberger
       # @param name [Symbol] factory name
       # @param block [Proc] block returning a hash of default attributes
       # @return [void]
-      def define(name, &block)
-        registry.define(name, &block)
+      def define(name, &)
+        registry.define(name, &)
       end
 
       # Register a trait override for a factory.
@@ -26,8 +26,8 @@ module Philiprehberger
       # @param trait_name [Symbol] trait name
       # @param block [Proc] block returning overridden attributes
       # @return [void]
-      def trait(factory_name, trait_name, &block)
-        registry.trait(factory_name, trait_name, &block)
+      def trait(factory_name, trait_name, &)
+        registry.trait(factory_name, trait_name, &)
       end
 
       # Register a sequence generator.
@@ -35,8 +35,8 @@ module Philiprehberger
       # @param name [Symbol] sequence name
       # @param block [Proc] block receiving an integer counter
       # @return [void]
-      def sequence(name, &block)
-        registry.sequence(name, &block)
+      def sequence(name, &)
+        registry.sequence(name, &)
       end
 
       # Build a single data hash from a factory.
