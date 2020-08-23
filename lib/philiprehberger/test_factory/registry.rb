@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "sequence"
+require_relative 'sequence'
 
 module Philiprehberger
   module TestFactory
