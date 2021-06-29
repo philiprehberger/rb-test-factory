@@ -2,6 +2,7 @@
 
 require_relative 'test_factory/version'
 require_relative 'test_factory/sequence'
+require_relative 'test_factory/definition_proxy'
 require_relative 'test_factory/registry'
 require_relative 'test_factory/builder'
 

@@ -765,8 +765,11 @@ RSpec.describe Philiprehberger::TestFactory do
       registry.define(:a) { { x: 1 } }
       registry.define(:b) { { y: 2 } }
 
-      expect(registry.get(:a).call).to eq(x: 1)
-      expect(registry.get(:b).call).to eq(y: 2)
+      entry_a = registry.get(:a)
+      entry_b = registry.get(:b)
+
+      expect(entry_a[:proxy].instance_exec(entry_a[:proxy], &entry_a[:block])).to eq(x: 1)
+      expect(entry_b[:proxy].instance_exec(entry_b[:proxy], &entry_b[:block])).to eq(y: 2)
     end
 
     it 'redefining a sequence resets its counter' do
@@ -805,6 +808,385 @@ RSpec.describe Philiprehberger::TestFactory do
 
       expect(seq.next).to be_nil
       expect(seq.next).to be_nil
+    end
+  end
+
+  describe 'after_build callbacks' do
+    it 'runs a single after_build callback' do
+      described_class.define(:user) do |f|
+        f.after_build { |obj| obj[:created_at] = '2026-01-01' }
+        { name: 'Alice', email: 'alice@example.com' }
+      end
+
+      result = described_class.build(:user)
+
+      expect(result[:name]).to eq('Alice')
+      expect(result[:created_at]).to eq('2026-01-01')
+    end
+
+    it 'runs multiple after_build callbacks in order' do
+      described_class.define(:user) do |f|
+        f.after_build { |obj| obj[:step1] = true }
+        f.after_build { |obj| obj[:step2] = true }
+        f.after_build { |obj| obj[:step3] = true }
+        { name: 'Alice' }
+      end
+
+      result = described_class.build(:user)
+
+      expect(result[:step1]).to eq(true)
+      expect(result[:step2]).to eq(true)
+      expect(result[:step3]).to eq(true)
+    end
+
+    it 'callback can modify existing attributes' do
+      described_class.define(:user) do |f|
+        f.after_build { |obj| obj[:name] = obj[:name].upcase }
+        { name: 'Alice' }
+      end
+
+      result = described_class.build(:user)
+
+      expect(result[:name]).to eq('ALICE')
+    end
+
+    it 'callback runs after overrides are applied' do
+      described_class.define(:user) do |f|
+        f.after_build { |obj| obj[:name] = obj[:name].upcase }
+        { name: 'Alice' }
+      end
+
+      result = described_class.build(:user, name: 'Bob')
+
+      expect(result[:name]).to eq('BOB')
+    end
+
+    it 'callback runs after traits are applied' do
+      described_class.define(:user) do |f|
+        f.after_build { |obj| obj[:summary] = "#{obj[:name]}-#{obj[:role]}" }
+        { name: 'Alice', role: 'user' }
+      end
+      described_class.trait(:user, :admin) { { role: 'admin' } }
+
+      result = described_class.build(:user, traits: [:admin])
+
+      expect(result[:summary]).to eq('Alice-admin')
+    end
+
+    it 'callbacks work with build_list' do
+      counter = 0
+      described_class.define(:item) do |f|
+        f.after_build do |obj|
+          counter += 1
+          obj[:build_order] = counter
+        end
+        { name: 'thing' }
+      end
+
+      results = described_class.build_list(:item, 3)
+
+      expect(results.map { |r| r[:build_order] }).to eq([1, 2, 3])
+    end
+
+    it 'factory with no callbacks works normally' do
+      described_class.define(:user) { { name: 'Alice' } }
+
+      result = described_class.build(:user)
+
+      expect(result).to eq(name: 'Alice')
+    end
+  end
+
+  describe 'transient attributes' do
+    it 'excludes transient attributes from the final hash' do
+      described_class.define(:user) do |f|
+        f.transient { admin false }
+        { name: 'Alice', role: 'user' }
+      end
+
+      result = described_class.build(:user)
+
+      expect(result).to eq(name: 'Alice', role: 'user')
+      expect(result).not_to have_key(:admin)
+    end
+
+    it 'transient attributes are accessible in after_build callbacks' do
+      described_class.define(:user) do |f|
+        f.transient { admin false }
+        f.after_build { |obj, transients| obj[:role] = 'admin' if transients[:admin] }
+        { name: 'Alice', role: 'user' }
+      end
+
+      result = described_class.build(:user, admin: true)
+
+      expect(result[:role]).to eq('admin')
+      expect(result).not_to have_key(:admin)
+    end
+
+    it 'transient attributes use defaults when not overridden' do
+      described_class.define(:user) do |f|
+        f.transient { admin false }
+        f.after_build { |obj, transients| obj[:role] = 'admin' if transients[:admin] }
+        { name: 'Alice', role: 'user' }
+      end
+
+      result = described_class.build(:user)
+
+      expect(result[:role]).to eq('user')
+    end
+
+    it 'multiple transient attributes can be declared' do
+      described_class.define(:user) do |f|
+        f.transient do
+          admin false
+          confirmed true
+        end
+        f.after_build do |obj, transients|
+          obj[:role] = 'admin' if transients[:admin]
+          obj[:confirmed_at] = '2026-01-01' if transients[:confirmed]
+        end
+        { name: 'Alice', role: 'user' }
+      end
+
+      result = described_class.build(:user, admin: true, confirmed: true)
+
+      expect(result[:role]).to eq('admin')
+      expect(result[:confirmed_at]).to eq('2026-01-01')
+      expect(result).not_to have_key(:admin)
+      expect(result).not_to have_key(:confirmed)
+    end
+
+    it 'transient attributes work with build_list' do
+      described_class.define(:user) do |f|
+        f.transient { uppercase false }
+        f.after_build { |obj, transients| obj[:name] = obj[:name].upcase if transients[:uppercase] }
+        { name: 'Alice' }
+      end
+
+      results = described_class.build_list(:user, 2, uppercase: true)
+
+      expect(results).to all(include(name: 'ALICE'))
+      results.each { |r| expect(r).not_to have_key(:uppercase) }
+    end
+
+    it 'transient defaults with nil value' do
+      described_class.define(:user) do |f|
+        f.transient { token nil }
+        f.after_build { |obj, transients| obj[:token] = transients[:token] if transients[:token] }
+        { name: 'Alice' }
+      end
+
+      result_without = described_class.build(:user)
+      result_with = described_class.build(:user, token: 'abc123')
+
+      expect(result_without).to eq(name: 'Alice')
+      expect(result_with).to eq(name: 'Alice', token: 'abc123')
+    end
+  end
+
+  describe 'associations' do
+    it 'builds an associated factory' do
+      described_class.define(:user) { { name: 'Alice', email: 'alice@example.com' } }
+      described_class.define(:post) do |f|
+        f.association :author, factory: :user
+        { title: 'Hello World', body: 'Content here' }
+      end
+
+      result = described_class.build(:post)
+
+      expect(result[:title]).to eq('Hello World')
+      expect(result[:author]).to eq(name: 'Alice', email: 'alice@example.com')
+    end
+
+    it 'overrides association with a plain hash' do
+      described_class.define(:user) { { name: 'Alice', email: 'alice@example.com' } }
+      described_class.define(:post) do |f|
+        f.association :author, factory: :user
+        { title: 'Hello World' }
+      end
+
+      result = described_class.build(:post, author: { name: 'Custom' })
+
+      expect(result[:author]).to eq(name: 'Custom')
+    end
+
+    it 'overrides association with nil' do
+      described_class.define(:user) { { name: 'Alice' } }
+      described_class.define(:post) do |f|
+        f.association :author, factory: :user
+        { title: 'Hello' }
+      end
+
+      result = described_class.build(:post, author: nil)
+
+      expect(result[:author]).to be_nil
+    end
+
+    it 'uses attribute name as factory name when factory option is omitted' do
+      described_class.define(:author) { { name: 'Alice' } }
+      described_class.define(:post) do |f|
+        f.association :author
+        { title: 'Hello' }
+      end
+
+      result = described_class.build(:post)
+
+      expect(result[:author]).to eq(name: 'Alice')
+    end
+
+    it 'supports multiple associations' do
+      described_class.define(:user) { { name: 'Alice' } }
+      described_class.define(:category) { { name: 'Tech' } }
+      described_class.define(:post) do |f|
+        f.association :author, factory: :user
+        f.association :category
+        { title: 'Hello' }
+      end
+
+      result = described_class.build(:post)
+
+      expect(result[:author]).to eq(name: 'Alice')
+      expect(result[:category]).to eq(name: 'Tech')
+      expect(result[:title]).to eq('Hello')
+    end
+
+    it 'associations work with build_list' do
+      described_class.define(:user) { { name: 'Alice' } }
+      described_class.define(:post) do |f|
+        f.association :author, factory: :user
+        { title: 'Hello' }
+      end
+
+      results = described_class.build_list(:post, 2)
+
+      results.each do |r|
+        expect(r[:author]).to eq(name: 'Alice')
+      end
+    end
+
+    it 'associated factory uses its own sequences' do
+      described_class.sequence(:user_email) { |n| "user_#{n}@example.com" }
+      described_class.define(:user) do
+        { name: 'Alice', email: described_class.send(:registry).next_in_sequence(:user_email) }
+      end
+      described_class.define(:post) do |f|
+        f.association :author, factory: :user
+        { title: 'Hello' }
+      end
+
+      r1 = described_class.build(:post)
+      r2 = described_class.build(:post)
+
+      expect(r1[:author][:email]).to eq('user_1@example.com')
+      expect(r2[:author][:email]).to eq('user_2@example.com')
+    end
+
+    it 'raises for undefined associated factory' do
+      described_class.define(:post) do |f|
+        f.association :author, factory: :nonexistent
+        { title: 'Hello' }
+      end
+
+      expect { described_class.build(:post) }
+        .to raise_error(Philiprehberger::TestFactory::Error, /Factory :nonexistent is not defined/)
+    end
+  end
+
+  describe 'callbacks, transients, and associations together' do
+    it 'supports all three features in one factory' do
+      described_class.define(:user) { { name: 'Alice' } }
+      described_class.define(:post) do |f|
+        f.transient { publish false }
+        f.association :author, factory: :user
+        f.after_build { |obj, transients| obj[:status] = 'published' if transients[:publish] }
+        { title: 'Hello', status: 'draft' }
+      end
+
+      draft = described_class.build(:post)
+      published = described_class.build(:post, publish: true)
+
+      expect(draft[:status]).to eq('draft')
+      expect(draft[:author]).to eq(name: 'Alice')
+      expect(draft).not_to have_key(:publish)
+
+      expect(published[:status]).to eq('published')
+      expect(published[:author]).to eq(name: 'Alice')
+      expect(published).not_to have_key(:publish)
+    end
+
+    it 'after_build can access association values' do
+      described_class.define(:user) { { name: 'Alice' } }
+      described_class.define(:post) do |f|
+        f.association :author, factory: :user
+        f.after_build { |obj| obj[:author_name] = obj[:author][:name] }
+        { title: 'Hello' }
+      end
+
+      result = described_class.build(:post)
+
+      expect(result[:author_name]).to eq('Alice')
+    end
+  end
+
+  describe Philiprehberger::TestFactory::DefinitionProxy do
+    subject(:proxy) { described_class.new }
+
+    it 'starts with empty callbacks' do
+      expect(proxy.after_build_callbacks).to eq([])
+    end
+
+    it 'starts with empty transient attributes' do
+      expect(proxy.transient_attributes).to eq({})
+    end
+
+    it 'starts with empty associations' do
+      expect(proxy.associations).to eq({})
+    end
+
+    it 'registers after_build callbacks' do
+      proxy.after_build { |obj| obj[:x] = 1 }
+      proxy.after_build { |obj| obj[:y] = 2 }
+
+      expect(proxy.after_build_callbacks.size).to eq(2)
+    end
+
+    it 'collects transient attributes' do
+      proxy.transient do
+        admin false
+        score 100
+      end
+
+      expect(proxy.transient_attributes).to eq(admin: false, score: 100)
+    end
+
+    it 'registers associations with explicit factory' do
+      proxy.association :author, factory: :user
+
+      expect(proxy.associations).to eq(author: :user)
+    end
+
+    it 'registers associations defaulting to attribute name' do
+      proxy.association :category
+
+      expect(proxy.associations).to eq(category: :category)
+    end
+  end
+
+  describe Philiprehberger::TestFactory::TransientCollector do
+    subject(:collector) { described_class.new }
+
+    it 'collects attributes via method calls' do
+      collector.instance_eval do
+        admin false
+        count 5
+        label 'test'
+      end
+
+      expect(collector.attributes).to eq(admin: false, count: 5, label: 'test')
+    end
+
+    it 'starts with empty attributes' do
+      expect(collector.attributes).to eq({})
     end
   end
 end

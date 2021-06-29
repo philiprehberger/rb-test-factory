@@ -19,12 +19,58 @@ module Philiprehberger
       # @return [Hash] the built data hash
       # @raise [Error] if the factory is not defined
       def build(name, traits: [], **overrides)
-        factory = @registry.get(name)
-        raise Error, "Factory :#{name} is not defined" unless factory
+        entry = @registry.get(name)
+        raise Error, "Factory :#{name} is not defined" unless entry
 
-        result = factory.call
+        block = entry[:block]
+        proxy = entry[:proxy]
+
+        # Evaluate the definition block to get fresh default attributes.
+        # For blocks accepting a proxy parameter, use a NullProxy to discard
+        # DSL re-registrations (they were already captured at define time).
+        result = if block.arity != 0
+                   null_proxy = NullProxy.new
+                   null_proxy.instance_exec(null_proxy, &block)
+                 else
+                   block.call
+                 end
+
+        # Apply traits
         traits.each { |t| result = apply_trait(name, t, result) }
-        result.merge(overrides)
+
+        # Separate transient overrides from regular overrides
+        transient_keys = proxy.transient_attributes.keys
+        transient_values = proxy.transient_attributes.dup
+        regular_overrides = {}
+
+        overrides.each do |key, value|
+          if transient_keys.include?(key)
+            transient_values[key] = value
+          else
+            regular_overrides[key] = value
+          end
+        end
+
+        # Build associations
+        proxy.associations.each do |attr_name, factory_name|
+          if regular_overrides.key?(attr_name)
+            # If overridden, use the override directly (no factory build)
+            result[attr_name] = regular_overrides.delete(attr_name)
+          else
+            result[attr_name] = build(factory_name)
+          end
+        end
+
+        # Apply regular overrides
+        result.merge!(regular_overrides)
+
+        # Remove transient attributes from the result
+        transient_keys.each { |key| result.delete(key) }
+
+        # Run after_build callbacks with the result and transient context
+        proxy.after_build_callbacks.each { |cb| cb.call(result, transient_values) }
+
+        result
       end
 
       # Build a list of data hashes.
