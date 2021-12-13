@@ -28,11 +28,11 @@ module Philiprehberger
         # Evaluate the definition block to get fresh default attributes.
         # For blocks accepting a proxy parameter, use a NullProxy to discard
         # DSL re-registrations (they were already captured at define time).
-        result = if block.arity != 0
+        result = if block.arity.zero?
+                   block.call
+                 else
                    null_proxy = NullProxy.new
                    null_proxy.instance_exec(null_proxy, &block)
-                 else
-                   block.call
                  end
 
         # Apply traits
@@ -53,12 +53,12 @@ module Philiprehberger
 
         # Build associations
         proxy.associations.each do |attr_name, factory_name|
-          if regular_overrides.key?(attr_name)
-            # If overridden, use the override directly (no factory build)
-            result[attr_name] = regular_overrides.delete(attr_name)
-          else
-            result[attr_name] = build(factory_name)
-          end
+          result[attr_name] = if regular_overrides.key?(attr_name)
+                                # If overridden, use the override directly (no factory build)
+                                regular_overrides.delete(attr_name)
+                              else
+                                build(factory_name)
+                              end
         end
 
         # Apply regular overrides
