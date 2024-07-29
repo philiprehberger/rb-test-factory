@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
 
   spec.summary = 'Lightweight test data factory DSL with sequences and traits'
   spec.description = 'Lightweight DSL for building test data objects without ActiveRecord. ' \
-                       'Define factories with default attributes, apply traits for variations, ' \
-                       'and use thread-safe sequences for unique values.'
+                     'Define factories with default attributes, apply traits for variations, ' \
+                     'and use thread-safe sequences for unique values.'
   spec.homepage = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-test_factory'
   spec.license = 'MIT'
 
