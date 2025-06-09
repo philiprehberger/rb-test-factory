@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-16
+
+### Added
+- `build_list(name, count, **overrides)` for generating multiple objects
+
+### Changed
+- `build_list` now raises `ArgumentError` for negative `count` values
+
 ## [0.2.1] - 2026-03-31
 
 ### Changed

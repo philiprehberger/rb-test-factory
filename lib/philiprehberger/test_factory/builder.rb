@@ -75,12 +75,19 @@ module Philiprehberger
 
       # Build a list of data hashes.
       #
+      # Each element goes through the normal build path so sequences,
+      # associations, and callbacks run once per object. Overrides and
+      # traits apply identically to every element in the list.
+      #
       # @param name [Symbol] factory name
-      # @param count [Integer] number of items to build
+      # @param count [Integer] number of items to build (must be >= 0)
       # @param traits [Array<Symbol>] trait names to apply
       # @param overrides [Hash] explicit attribute overrides
       # @return [Array<Hash>] the built data hashes
+      # @raise [ArgumentError] if count is negative
       def build_list(name, count, traits: [], **overrides)
+        raise ArgumentError, "count must be non-negative, got #{count}" if count.negative?
+
         Array.new(count) { build(name, traits: traits, **overrides) }
       end
 
