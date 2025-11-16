@@ -61,6 +61,17 @@ module Philiprehberger
         builder.build_list(name, count, traits: traits, **overrides)
       end
 
+      # Resolve the attribute hash without firing after_build callbacks or
+      # resolving associations. Mirrors FactoryBot's `attributes_for`.
+      #
+      # @param name [Symbol] factory name
+      # @param traits [Array<Symbol>] trait names to apply
+      # @param overrides [Hash] explicit attribute overrides
+      # @return [Hash] the resolved attribute hash
+      def attributes_for(name, traits: [], **overrides)
+        builder.attributes_for(name, traits: traits, **overrides)
+      end
+
       # Clear all factory definitions, traits, and sequences.
       #
       # @return [void]
