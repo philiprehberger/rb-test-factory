@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
 
   spec.summary       = "Lightweight test data factory DSL with sequences and traits"
   spec.description   = "Lightweight DSL for building test data objects without ActiveRecord. " \
-                        "Define factories with default attributes, apply traits for variations, " \
-                        "and use thread-safe sequences for unique values."
+                       "Define factories with default attributes, apply traits for variations, " \
+                       "and use thread-safe sequences for unique values."
   spec.homepage      = "https://github.com/philiprehberger/rb-test-factory"
   spec.license       = "MIT"
 
@@ -19,7 +19,8 @@ Gem::Specification.new do |spec|
 
   spec.metadata["homepage_uri"]    = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
-  spec.metadata["changelog_uri"]   = "#{spec.homepage}/blob/main/CHANGELOG.md"
+  spec.metadata["changelog_uri"]        = "#{spec.homepage}/blob/main/CHANGELOG.md"
+  spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = Dir["lib/**/*.rb", "LICENSE", "README.md", "CHANGELOG.md"]
   spec.require_paths = ["lib"]
