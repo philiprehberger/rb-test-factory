@@ -2,6 +2,7 @@
 
 [![Tests](https://github.com/philiprehberger/rb-test-factory/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-test-factory/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-test_factory.svg)](https://rubygems.org/gems/philiprehberger-test_factory)
+[![License](https://img.shields.io/github/license/philiprehberger/rb-test-factory)](LICENSE)
 
 Lightweight test data factory DSL with sequences and traits. Build test data objects without ActiveRecord.
 
