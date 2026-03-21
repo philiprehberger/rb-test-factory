@@ -18,12 +18,6 @@ Add to your Gemfile:
 gem "philiprehberger-test_factory"
 ```
 
-Then run:
-
-```bash
-bundle install
-```
-
 Or install directly:
 
 ```bash
