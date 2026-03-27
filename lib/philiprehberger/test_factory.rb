@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "test_factory/version"
-require_relative "test_factory/sequence"
-require_relative "test_factory/registry"
-require_relative "test_factory/builder"
+require_relative 'test_factory/version'
+require_relative 'test_factory/sequence'
+require_relative 'test_factory/registry'
+require_relative 'test_factory/builder'
 
 module Philiprehberger
   # Lightweight DSL for building test data objects without ActiveRecord.
