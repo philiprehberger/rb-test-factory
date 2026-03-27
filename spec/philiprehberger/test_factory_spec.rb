@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 RSpec.describe Philiprehberger::TestFactory do
-  before { described_class.reset! }
+  before { Philiprehberger::TestFactory.reset! }
 
   it 'has a version number' do
     expect(Philiprehberger::TestFactory::VERSION).not_to be_nil
