@@ -32,9 +32,9 @@ module Philiprehberger
       #
       # @yield block that calls attribute setters
       # @return [void]
-      def transient(&block)
+      def transient(&)
         collector = TransientCollector.new
-        collector.instance_eval(&block)
+        collector.instance_eval(&)
         @transient_attributes.merge!(collector.attributes)
       end
 
@@ -51,8 +51,8 @@ module Philiprehberger
     # No-op proxy used during build to silently discard DSL calls.
     # The real DSL calls were already captured at define time.
     class NullProxy
-      def after_build(&_block) = nil
-      def transient(&_block) = nil
+      def after_build(&) = nil
+      def transient(&) = nil
       def association(_name, **_opts) = nil
     end
 
