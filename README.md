@@ -2,7 +2,11 @@
 
 [![Tests](https://github.com/philiprehberger/rb-test-factory/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-test-factory/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-test_factory.svg)](https://rubygems.org/gems/philiprehberger-test_factory)
+[![GitHub release](https://img.shields.io/github/v/release/philiprehberger/rb-test-factory)](https://github.com/philiprehberger/rb-test-factory/releases)
+[![Last updated](https://img.shields.io/github/last-commit/philiprehberger/rb-test-factory)](https://github.com/philiprehberger/rb-test-factory/commits/main)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-test-factory)](LICENSE)
+[![Bug Reports](https://img.shields.io/github/issues/philiprehberger/rb-test-factory/bug)](https://github.com/philiprehberger/rb-test-factory/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
+[![Feature Requests](https://img.shields.io/github/issues/philiprehberger/rb-test-factory/enhancement)](https://github.com/philiprehberger/rb-test-factory/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
 [![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Lightweight test data factory DSL with sequences and traits
@@ -71,6 +75,41 @@ users = Philiprehberger::TestFactory.build_list(:user, 5)
 # => Array of 5 user hashes
 ```
 
+### Callbacks
+
+```ruby
+Philiprehberger::TestFactory.define(:user) do |f|
+  f.after_build { |obj| obj[:created_at] = Time.now }
+  { name: "Alice", email: "alice@example.com" }
+end
+```
+
+### Transient Attributes
+
+```ruby
+Philiprehberger::TestFactory.define(:user) do |f|
+  f.transient { admin false }
+  f.after_build { |obj, transients| obj[:role] = "admin" if transients[:admin] }
+  { name: "Alice", role: "user" }
+end
+
+user = Philiprehberger::TestFactory.build(:user, admin: true)
+# => { name: "Alice", role: "admin" }
+```
+
+### Associations
+
+```ruby
+Philiprehberger::TestFactory.define(:user) { { name: "Alice" } }
+Philiprehberger::TestFactory.define(:post) do |f|
+  f.association :author, factory: :user
+  { title: "Hello World" }
+end
+
+post = Philiprehberger::TestFactory.build(:post)
+# => { title: "Hello World", author: { name: "Alice" } }
+```
+
 ### Reset
 
 ```ruby
@@ -87,16 +126,9 @@ Philiprehberger::TestFactory.reset!
 | `TestFactory.build(name, traits:, **overrides)` | Build a single data hash |
 | `TestFactory.build_list(name, count, traits:, **overrides)` | Build N data hashes |
 | `TestFactory.reset!` | Clear all definitions, traits, and sequences |
-| `Registry#define(name, &block)` | Store a factory definition |
-| `Registry#trait(factory_name, trait_name, &block)` | Store a trait override |
-| `Registry#sequence(name, &block)` | Store a sequence generator |
-| `Registry#get(name)` | Retrieve a factory definition |
-| `Registry#get_trait(factory_name, trait_name)` | Retrieve a trait |
-| `Registry#next_in_sequence(name)` | Get next value from a sequence |
-| `Registry#clear!` | Reset all definitions |
-| `Builder#build(name, traits:, **overrides)` | Build one hash from factory + traits + overrides |
-| `Builder#build_list(name, count, traits:, **overrides)` | Build N hashes |
-| `Sequence#next` | Increment counter and return block result (thread-safe) |
+| `DefinitionProxy#after_build(&block)` | Register a callback that runs after building |
+| `DefinitionProxy#transient(&block)` | Declare transient attributes excluded from the result |
+| `DefinitionProxy#association(name, factory:)` | Declare an association to another factory |
 
 ## Development
 
@@ -105,6 +137,13 @@ bundle install
 bundle exec rspec
 bundle exec rubocop
 ```
+
+## Support
+
+If you find this package useful, consider giving it a star on GitHub — it helps motivate continued maintenance and development.
+
+[![LinkedIn](https://img.shields.io/badge/Philip%20Rehberger-LinkedIn-0A66C2?logo=linkedin)](https://www.linkedin.com/in/philiprehberger)
+[![More packages](https://img.shields.io/badge/more-open%20source%20packages-blue)](https://philiprehberger.com/open-source-packages)
 
 ## License
 

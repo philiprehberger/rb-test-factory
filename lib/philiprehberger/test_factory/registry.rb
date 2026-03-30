@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'sequence'
+require_relative 'definition_proxy'
 
 module Philiprehberger
   module TestFactory
@@ -11,12 +12,21 @@ module Philiprehberger
       end
 
       # Register a factory definition.
+      # If the block accepts a parameter, it receives a DefinitionProxy
+      # for declaring callbacks, transient attributes, and associations.
+      # The block must return a hash of default attributes.
       #
       # @param name [Symbol] factory name
       # @param block [Proc] block returning a hash of default attributes
       # @return [void]
       def define(name, &block)
-        @factories[name] = block
+        proxy = DefinitionProxy.new
+
+        # If the block accepts a parameter, evaluate once to capture DSL declarations.
+        # Blocks without parameters are simple attribute hashes with no DSL usage.
+        proxy.instance_exec(proxy, &block) if block.arity != 0
+
+        @factories[name] = { block: block, proxy: proxy }
       end
 
       # Register a trait override for a factory.
@@ -42,7 +52,7 @@ module Philiprehberger
       # Retrieve a factory definition.
       #
       # @param name [Symbol] factory name
-      # @return [Proc, nil] the factory block or nil
+      # @return [Hash, nil] hash with :block and :proxy keys, or nil
       def get(name)
         @factories[name]
       end

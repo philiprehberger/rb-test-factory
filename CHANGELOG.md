@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-30
+
+### Added
+
+- Factory callbacks via `after_build` — run hooks after building an object
+- Transient attributes via `transient` block — declare attributes used in callbacks but excluded from the final hash
+- Associations via `association` — build nested objects using other registered factories
+
 ## [0.1.9] - 2026-03-26
 
 ### Changed
