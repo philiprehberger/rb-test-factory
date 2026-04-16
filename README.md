@@ -63,11 +63,45 @@ email = Philiprehberger::TestFactory.send(:registry).next_in_sequence(:email)
 # => "user_1@example.com"
 ```
 
-### Build Lists
+### Collections
+
+Generate N objects at once with `build_list`. Each element goes through the
+normal `build` path, so sequences increment once per object and overrides or
+traits apply identically to every element.
 
 ```ruby
-users = Philiprehberger::TestFactory.build_list(:user, 5)
-# => Array of 5 user hashes
+Philiprehberger::TestFactory.sequence(:email) { |n| "user_#{n}@example.com" }
+Philiprehberger::TestFactory.define(:user) do
+  {
+    name: "User",
+    email: Philiprehberger::TestFactory.send(:registry).next_in_sequence(:email),
+    role: "user"
+  }
+end
+
+users = Philiprehberger::TestFactory.build_list(:user, 3)
+# => [
+#      { name: "User", email: "user_1@example.com", role: "user" },
+#      { name: "User", email: "user_2@example.com", role: "user" },
+#      { name: "User", email: "user_3@example.com", role: "user" }
+#    ]
+
+# Apply overrides and traits to every element
+Philiprehberger::TestFactory.trait(:user, :admin) { { role: "admin" } }
+
+admins = Philiprehberger::TestFactory.build_list(:user, 2, traits: [:admin], name: "Bob")
+# => [
+#      { name: "Bob", email: "user_4@example.com", role: "admin" },
+#      { name: "Bob", email: "user_5@example.com", role: "admin" }
+#    ]
+
+# count == 0 returns an empty array
+Philiprehberger::TestFactory.build_list(:user, 0)
+# => []
+
+# Negative counts raise ArgumentError
+Philiprehberger::TestFactory.build_list(:user, -1)
+# => ArgumentError: count must be non-negative, got -1
 ```
 
 ### Callbacks

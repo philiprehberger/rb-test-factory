@@ -150,6 +150,55 @@ RSpec.describe Philiprehberger::TestFactory do
       expect { described_class.build_list(:nonexistent, 2) }
         .to raise_error(Philiprehberger::TestFactory::Error, /Factory :nonexistent is not defined/)
     end
+
+    it 'raises ArgumentError for a negative count' do
+      described_class.define(:user) { { name: 'Alice' } }
+
+      expect { described_class.build_list(:user, -1) }
+        .to raise_error(ArgumentError, /count must be non-negative/)
+    end
+
+    it 'raises ArgumentError for a large negative count' do
+      described_class.define(:user) { { name: 'Alice' } }
+
+      expect { described_class.build_list(:user, -10) }
+        .to raise_error(ArgumentError, /count must be non-negative/)
+    end
+
+    it 'returns distinct object instances per element' do
+      described_class.define(:user) { { name: 'Alice' } }
+
+      results = described_class.build_list(:user, 3)
+
+      expect(results.map(&:object_id).uniq.size).to eq(3)
+    end
+
+    it 'propagates sequences so each element has a unique value' do
+      described_class.sequence(:email) { |n| "user_#{n}@example.com" }
+      described_class.define(:user) do
+        { name: 'User', email: described_class.send(:registry).next_in_sequence(:email) }
+      end
+
+      results = described_class.build_list(:user, 4)
+
+      emails = results.map { |r| r[:email] }
+      expect(emails).to eq(
+        ['user_1@example.com', 'user_2@example.com', 'user_3@example.com', 'user_4@example.com']
+      )
+      expect(emails.uniq.size).to eq(4)
+    end
+
+    it 'applies identical overrides to every element in the list' do
+      described_class.define(:user) { { name: 'Alice', role: 'user', active: true } }
+
+      results = described_class.build_list(:user, 3, name: 'Bob', role: 'admin')
+
+      results.each do |r|
+        expect(r[:name]).to eq('Bob')
+        expect(r[:role]).to eq('admin')
+        expect(r[:active]).to eq(true)
+      end
+    end
   end
 
   describe '.trait' do
@@ -755,6 +804,19 @@ RSpec.describe Philiprehberger::TestFactory do
     it 'build_list raises for undefined factory' do
       expect { builder.build_list(:missing, 2) }
         .to raise_error(Philiprehberger::TestFactory::Error, 'Factory :missing is not defined')
+    end
+
+    it 'build_list raises ArgumentError for a negative count' do
+      registry.define(:item) { { name: 'thing' } }
+
+      expect { builder.build_list(:item, -1) }
+        .to raise_error(ArgumentError, /count must be non-negative/)
+    end
+
+    it 'build_list returns [] for count == 0' do
+      registry.define(:item) { { name: 'thing' } }
+
+      expect(builder.build_list(:item, 0)).to eq([])
     end
   end
 
