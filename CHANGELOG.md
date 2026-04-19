@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-18
+
+### Added
+- `TestFactory.attributes_for(name, traits: [], **overrides)` — returns attribute hash without firing `after_build` callbacks or resolving associations; mirrors FactoryBot `attributes_for`
+
 ## [0.3.0] - 2026-04-16
 
 ### Added

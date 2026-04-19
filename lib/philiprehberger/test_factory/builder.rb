@@ -19,6 +19,48 @@ module Philiprehberger
       # @return [Hash] the built data hash
       # @raise [Error] if the factory is not defined
       def build(name, traits: [], **overrides)
+        result, transient_values, proxy = resolve_attributes(name, traits: traits, resolve_associations: true, **overrides)
+
+        # Run after_build callbacks with the result and transient context
+        proxy.after_build_callbacks.each { |cb| cb.call(result, transient_values) }
+
+        result
+      end
+
+      # Build the attribute hash without firing after_build callbacks or
+      # resolving associations. Mirrors FactoryBot's `attributes_for`.
+      #
+      # @param name [Symbol] factory name
+      # @param traits [Array<Symbol>] trait names to apply
+      # @param overrides [Hash] explicit attribute overrides
+      # @return [Hash] the resolved attribute hash
+      # @raise [Error] if the factory is not defined
+      def attributes_for(name, traits: [], **overrides)
+        result, = resolve_attributes(name, traits: traits, resolve_associations: false, **overrides)
+        result
+      end
+
+      # Build a list of data hashes.
+      #
+      # Each element goes through the normal build path so sequences,
+      # associations, and callbacks run once per object. Overrides and
+      # traits apply identically to every element in the list.
+      #
+      # @param name [Symbol] factory name
+      # @param count [Integer] number of items to build (must be >= 0)
+      # @param traits [Array<Symbol>] trait names to apply
+      # @param overrides [Hash] explicit attribute overrides
+      # @return [Array<Hash>] the built data hashes
+      # @raise [ArgumentError] if count is negative
+      def build_list(name, count, traits: [], **overrides)
+        raise ArgumentError, "count must be non-negative, got #{count}" if count.negative?
+
+        Array.new(count) { build(name, traits: traits, **overrides) }
+      end
+
+      private
+
+      def resolve_attributes(name, traits:, resolve_associations:, **overrides)
         entry = @registry.get(name)
         raise Error, "Factory :#{name} is not defined" unless entry
 
@@ -51,12 +93,12 @@ module Philiprehberger
           end
         end
 
-        # Build associations
+        # Handle associations: resolve to a built hash when requested, otherwise nil.
         proxy.associations.each do |attr_name, factory_name|
           result[attr_name] = if regular_overrides.key?(attr_name)
                                 # If overridden, use the override directly (no factory build)
                                 regular_overrides.delete(attr_name)
-                              else
+                              elsif resolve_associations
                                 build(factory_name)
                               end
         end
@@ -67,31 +109,8 @@ module Philiprehberger
         # Remove transient attributes from the result
         transient_keys.each { |key| result.delete(key) }
 
-        # Run after_build callbacks with the result and transient context
-        proxy.after_build_callbacks.each { |cb| cb.call(result, transient_values) }
-
-        result
+        [result, transient_values, proxy]
       end
-
-      # Build a list of data hashes.
-      #
-      # Each element goes through the normal build path so sequences,
-      # associations, and callbacks run once per object. Overrides and
-      # traits apply identically to every element in the list.
-      #
-      # @param name [Symbol] factory name
-      # @param count [Integer] number of items to build (must be >= 0)
-      # @param traits [Array<Symbol>] trait names to apply
-      # @param overrides [Hash] explicit attribute overrides
-      # @return [Array<Hash>] the built data hashes
-      # @raise [ArgumentError] if count is negative
-      def build_list(name, count, traits: [], **overrides)
-        raise ArgumentError, "count must be non-negative, got #{count}" if count.negative?
-
-        Array.new(count) { build(name, traits: traits, **overrides) }
-      end
-
-      private
 
       def apply_trait(factory_name, trait_name, base)
         trait = @registry.get_trait(factory_name, trait_name)

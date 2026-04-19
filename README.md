@@ -139,6 +139,21 @@ post = Philiprehberger::TestFactory.build(:post)
 # => { title: "Hello World", author: { name: "Alice" } }
 ```
 
+### Attributes For
+
+Return a plain attribute hash without firing `after_build` callbacks or
+resolving `association` objects — useful for unit tests that need the raw
+attributes without nested dependencies. Mirrors FactoryBot's `attributes_for`.
+
+```ruby
+Philiprehberger::TestFactory.define(:user) do
+  { name: "Alice", role: "user" }
+end
+
+attrs = Philiprehberger::TestFactory.attributes_for(:user, role: :admin)
+# => { name: "Alice", role: :admin }
+```
+
 ### Reset
 
 ```ruby
@@ -154,6 +169,7 @@ Philiprehberger::TestFactory.reset!
 | `TestFactory.sequence(name, &block)` | Register a thread-safe auto-incrementing sequence |
 | `TestFactory.build(name, traits:, **overrides)` | Build a single data hash |
 | `TestFactory.build_list(name, count, traits:, **overrides)` | Build N data hashes |
+| `TestFactory.attributes_for(name, traits:, **overrides)` | Resolve attributes without `after_build` callbacks or associations |
 | `TestFactory.reset!` | Clear all definitions, traits, and sequences |
 | `DefinitionProxy#after_build(&block)` | Register a callback that runs after building |
 | `DefinitionProxy#transient(&block)` | Declare transient attributes excluded from the result |
