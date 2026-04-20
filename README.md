@@ -169,6 +169,7 @@ Philiprehberger::TestFactory.reset!
 | `TestFactory.sequence(name, &block)` | Register a thread-safe auto-incrementing sequence |
 | `TestFactory.build(name, traits:, **overrides)` | Build a single data hash |
 | `TestFactory.build_list(name, count, traits:, **overrides)` | Build N data hashes |
+| `TestFactory.build_pair(name, traits:, **overrides)` | Build exactly 2 data hashes (FactoryBot-compatible convenience) |
 | `TestFactory.attributes_for(name, traits:, **overrides)` | Resolve attributes without `after_build` callbacks or associations |
 | `TestFactory.reset!` | Clear all definitions, traits, and sequences |
 | `DefinitionProxy#after_build(&block)` | Register a callback that runs after building |

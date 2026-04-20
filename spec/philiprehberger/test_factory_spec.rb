@@ -201,6 +201,34 @@ RSpec.describe Philiprehberger::TestFactory do
     end
   end
 
+  describe '.build_pair' do
+    it 'returns exactly two items' do
+      described_class.define(:user) { { name: 'Alice' } }
+
+      results = described_class.build_pair(:user)
+
+      expect(results.size).to eq(2)
+      expect(results).to all(eq(name: 'Alice'))
+    end
+
+    it 'applies overrides and traits to both items' do
+      described_class.define(:user) { { name: 'Alice', role: 'user' } }
+      described_class.trait(:user, :admin) { { role: 'admin' } }
+
+      results = described_class.build_pair(:user, traits: [:admin], name: 'Bob')
+
+      expect(results).to all(include(name: 'Bob', role: 'admin'))
+    end
+
+    it 'produces distinct object instances' do
+      described_class.define(:user) { { name: 'Alice' } }
+
+      results = described_class.build_pair(:user)
+
+      expect(results[0]).not_to be(results[1])
+    end
+  end
+
   describe '.trait' do
     it 'overrides specific fields with a trait' do
       described_class.define(:user) { { name: 'Alice', role: 'user', active: true } }

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-20
+
+### Added
+- `TestFactory.build_pair(name, traits: [], **overrides)` — convenience wrapper around `build_list(name, 2, ...)` matching FactoryBot's `build_pair`.
+
 ## [0.4.0] - 2026-04-18
 
 ### Added
