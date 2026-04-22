@@ -61,6 +61,17 @@ module Philiprehberger
         builder.build_list(name, count, traits: traits, **overrides)
       end
 
+      # Build exactly two data hashes from a factory. Convenience shortcut
+      # around {#build_list} mirroring FactoryBot's `build_pair`.
+      #
+      # @param name [Symbol] factory name
+      # @param traits [Array<Symbol>] trait names to apply
+      # @param overrides [Hash] explicit attribute overrides
+      # @return [Array<Hash>] two built data hashes
+      def build_pair(name, traits: [], **overrides)
+        builder.build_list(name, 2, traits: traits, **overrides)
+      end
+
       # Resolve the attribute hash without firing after_build callbacks or
       # resolving associations. Mirrors FactoryBot's `attributes_for`.
       #
