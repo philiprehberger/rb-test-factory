@@ -229,6 +229,47 @@ RSpec.describe Philiprehberger::TestFactory do
     end
   end
 
+  describe '.build_trio' do
+    it 'returns exactly three items' do
+      described_class.define(:user) { { name: 'Alice' } }
+
+      results = described_class.build_trio(:user)
+
+      expect(results.size).to eq(3)
+      expect(results).to all(eq(name: 'Alice'))
+    end
+
+    it 'applies overrides and traits to all three items' do
+      described_class.define(:user) { { name: 'Alice', role: 'user' } }
+      described_class.trait(:user, :admin) { { role: 'admin' } }
+
+      results = described_class.build_trio(:user, traits: [:admin], name: 'Bob')
+
+      expect(results).to all(include(name: 'Bob', role: 'admin'))
+    end
+
+    it 'produces distinct object instances' do
+      described_class.define(:user) { { name: 'Alice' } }
+
+      results = described_class.build_trio(:user)
+
+      expect(results[0]).not_to be(results[1])
+      expect(results[1]).not_to be(results[2])
+      expect(results[0]).not_to be(results[2])
+    end
+
+    it 'increments sequences once per item' do
+      described_class.sequence(:id) { |n| n }
+      described_class.define(:user) do
+        { id: described_class.send(:registry).next_in_sequence(:id), name: 'User' }
+      end
+
+      results = described_class.build_trio(:user)
+
+      expect(results.map { |r| r[:id] }).to eq([1, 2, 3])
+    end
+  end
+
   describe '.trait' do
     it 'overrides specific fields with a trait' do
       described_class.define(:user) { { name: 'Alice', role: 'user', active: true } }

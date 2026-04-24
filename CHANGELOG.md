@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-23
+
+### Added
+- `TestFactory.build_trio(name, traits: [], **overrides)` — convenience wrapper around `build_list(name, 3, ...)` completing the `build` / `build_pair` / `build_trio` progression.
+
 ## [0.5.0] - 2026-04-20
 
 ### Added

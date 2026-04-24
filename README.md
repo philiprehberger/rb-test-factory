@@ -102,6 +102,10 @@ Philiprehberger::TestFactory.build_list(:user, 0)
 # Negative counts raise ArgumentError
 Philiprehberger::TestFactory.build_list(:user, -1)
 # => ArgumentError: count must be non-negative, got -1
+
+# Fixed-size helpers:
+Philiprehberger::TestFactory.build_pair(:user)  # exactly 2
+Philiprehberger::TestFactory.build_trio(:user)  # exactly 3
 ```
 
 ### Callbacks
@@ -170,6 +174,7 @@ Philiprehberger::TestFactory.reset!
 | `TestFactory.build(name, traits:, **overrides)` | Build a single data hash |
 | `TestFactory.build_list(name, count, traits:, **overrides)` | Build N data hashes |
 | `TestFactory.build_pair(name, traits:, **overrides)` | Build exactly 2 data hashes (FactoryBot-compatible convenience) |
+| `TestFactory.build_trio(name, traits:, **overrides)` | Build exactly 3 data hashes |
 | `TestFactory.attributes_for(name, traits:, **overrides)` | Resolve attributes without `after_build` callbacks or associations |
 | `TestFactory.reset!` | Clear all definitions, traits, and sequences |
 | `DefinitionProxy#after_build(&block)` | Register a callback that runs after building |

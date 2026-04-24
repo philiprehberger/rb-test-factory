@@ -72,6 +72,18 @@ module Philiprehberger
         builder.build_list(name, 2, traits: traits, **overrides)
       end
 
+      # Build exactly three data hashes from a factory. Convenience shortcut
+      # around {#build_list} completing the `build` / `build_pair` / `build_trio`
+      # progression.
+      #
+      # @param name [Symbol] factory name
+      # @param traits [Array<Symbol>] trait names to apply
+      # @param overrides [Hash] explicit attribute overrides
+      # @return [Array<Hash>] three built data hashes
+      def build_trio(name, traits: [], **overrides)
+        builder.build_list(name, 3, traits: traits, **overrides)
+      end
+
       # Resolve the attribute hash without firing after_build callbacks or
       # resolving associations. Mirrors FactoryBot's `attributes_for`.
       #
