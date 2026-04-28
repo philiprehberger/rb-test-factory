@@ -164,6 +164,25 @@ attrs = Philiprehberger::TestFactory.attributes_for(:user, role: :admin)
 Philiprehberger::TestFactory.reset!
 ```
 
+### Registry Inspection
+
+Check which factories are registered without poking at internal state. Useful
+in shared spec helpers or library setup that should only register a factory
+when it isn't already defined.
+
+```ruby
+Philiprehberger::TestFactory.define(:user) { { name: "Alice" } }
+
+Philiprehberger::TestFactory.factories
+# => [:user]
+
+Philiprehberger::TestFactory.defined?(:user)
+# => true
+
+Philiprehberger::TestFactory.defined?(:post)
+# => false
+```
+
 ## API
 
 | Method | Description |
@@ -177,6 +196,8 @@ Philiprehberger::TestFactory.reset!
 | `TestFactory.build_trio(name, traits:, **overrides)` | Build exactly 3 data hashes |
 | `TestFactory.attributes_for(name, traits:, **overrides)` | Resolve attributes without `after_build` callbacks or associations |
 | `TestFactory.reset!` | Clear all definitions, traits, and sequences |
+| `TestFactory.factories` | List all registered factory names in registration order |
+| `TestFactory.defined?(name)` | Whether a factory has been registered under the given name |
 | `DefinitionProxy#after_build(&block)` | Register a callback that runs after building |
 | `DefinitionProxy#transient(&block)` | Declare transient attributes excluded from the result |
 | `DefinitionProxy#association(name, factory:)` | Declare an association to another factory |

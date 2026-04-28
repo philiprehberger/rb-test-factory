@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-04-27
+
+### Added
+- `TestFactory.factories` — list registered factory names in registration order.
+- `TestFactory.defined?(name)` — predicate for whether a factory is registered.
+- `Registry#factory_names` and `Registry#defined?` — corresponding registry-level inspection methods.
+
 ## [0.6.0] - 2026-04-23
 
 ### Added

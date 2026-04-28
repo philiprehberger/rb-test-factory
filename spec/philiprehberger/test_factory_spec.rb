@@ -416,6 +416,45 @@ RSpec.describe Philiprehberger::TestFactory do
     end
   end
 
+  describe '.factories and .defined?' do
+    it 'returns an empty array when nothing is registered' do
+      expect(described_class.factories).to eq([])
+    end
+
+    it 'lists factory names in registration order' do
+      described_class.define(:user) { { name: 'Alice' } }
+      described_class.define(:post) { { title: 'Hello' } }
+      described_class.define(:comment) { { body: 'Nice' } }
+
+      expect(described_class.factories).to eq(%i[user post comment])
+    end
+
+    it 'does not include traits or sequences' do
+      described_class.define(:user) { { name: 'Alice' } }
+      described_class.trait(:user, :admin) { { role: 'admin' } }
+      described_class.sequence(:n) { |i| i }
+
+      expect(described_class.factories).to eq([:user])
+    end
+
+    it 'returns true for a registered factory' do
+      described_class.define(:user) { { name: 'Alice' } }
+
+      expect(described_class.defined?(:user)).to be(true)
+    end
+
+    it 'returns false for an unknown factory name' do
+      expect(described_class.defined?(:nope)).to be(false)
+    end
+
+    it 'returns false after reset!' do
+      described_class.define(:user) { { name: 'Alice' } }
+      described_class.reset!
+
+      expect(described_class.defined?(:user)).to be(false)
+    end
+  end
+
   describe 'error handling' do
     it 'raises an error for undefined factories' do
       expect { described_class.build(:nonexistent) }

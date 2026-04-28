@@ -86,6 +86,21 @@ module Philiprehberger
         @traits = {}
         @sequences = {}
       end
+
+      # Names of all registered factories in registration order.
+      #
+      # @return [Array<Symbol>]
+      def factory_names
+        @factories.keys
+      end
+
+      # Whether a factory has been registered under the given name.
+      #
+      # @param name [Symbol] factory name
+      # @return [Boolean]
+      def defined?(name)
+        @factories.key?(name)
+      end
     end
   end
 end

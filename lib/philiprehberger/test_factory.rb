@@ -103,6 +103,21 @@ module Philiprehberger
         @builder = nil
       end
 
+      # Names of all registered factories in registration order.
+      #
+      # @return [Array<Symbol>]
+      def factories
+        registry.factory_names
+      end
+
+      # Whether a factory has been registered under the given name.
+      #
+      # @param name [Symbol] factory name
+      # @return [Boolean]
+      def defined?(name)
+        registry.defined?(name)
+      end
+
       private
 
       def registry
